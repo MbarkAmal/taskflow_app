@@ -122,28 +122,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           );
                         },
                         child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CircleAvatar(
-                                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                                  child: Icon(Icons.folder_copy, color: Theme.of(context).primaryColor),
+                          child: Stack(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                      child: Icon(Icons.folder_copy, color: Theme.of(context).primaryColor),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      project.name,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      'Owner: ${project.ownerId == user?.id ? 'You' : 'Member'}',
+                                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    ),
+                                  ],
                                 ),
-                                const Spacer(),
-                                Text(
-                                  project.name,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                              ),
+                              if (project.ownerId == user?.id)
+                                Positioned(
+                                  top: 4,
+                                  right: 4,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          title: const Text('Delete Project?'),
+                                          content: Text('Are you sure you want to delete "${project.name}" and all its tasks?'),
+                                          actions: [
+                                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                                            TextButton(
+                                              onPressed: () {
+                                                context.read<TaskProvider>().deleteProject(project.id);
+                                                Navigator.pop(ctx);
+                                              },
+                                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
-                                Text(
-                                  'Owner: ${project.ownerId == user?.id ? 'You' : 'Member'}',
-                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                ),
-                              ],
-                            ),
+                            ],
                           ),
                         ),
                       );

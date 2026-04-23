@@ -9,11 +9,20 @@ class TaskProvider with ChangeNotifier {
 
   List<ProjectModel> _projects = [];
   List<TaskModel> _tasks = [];
+  List<UserModel> _users = [];
   bool _isLoading = false;
 
   List<ProjectModel> get projects => _projects;
   List<TaskModel> get tasks => _tasks;
+  List<UserModel> get users => _users;
   bool get isLoading => _isLoading;
+
+  void fetchUsers() {
+    _taskService.getUsers().listen((data) {
+      _users = data;
+      notifyListeners();
+    });
+  }
 
   void fetchProjects(String userId) {
     _taskService.getProjects(userId).listen((data) {
@@ -39,6 +48,10 @@ class TaskProvider with ChangeNotifier {
       createdAt: DateTime.now(),
     );
     await _taskService.createProject(project);
+  }
+
+  Future<void> deleteProject(String projectId) async {
+    await _taskService.deleteProject(projectId);
   }
 
   Future<void> addTask({

@@ -16,17 +16,25 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
+  String? _selectedUserId;
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
 
+  @override
+  void initState() {
+    super.initState();
+    context.read<TaskProvider>().fetchUsers();
+    _selectedUserId = context.read<AuthProvider>().currentUser?.id;
+  }
+
   void _saveTask() async {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState!.validate() && _selectedUserId != null) {
       final user = context.read<AuthProvider>().currentUser;
       if (user != null) {
         await context.read<TaskProvider>().addTask(
               title: _titleController.text,
               description: _descController.text,
               projectId: widget.projectId,
-              assignedToId: user.id, // Assign to self by default
+              assignedToId: _selectedUserId!,
               dueDate: _selectedDate,
             );
         if (!mounted) return;
@@ -37,6 +45,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final users = context.watch<TaskProvider>().users;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Add Task')),
       body: SingleChildScrollView(
@@ -55,6 +65,19 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 controller: _descController,
                 decoration: const InputDecoration(labelText: 'Description'),
                 maxLines: 3,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedUserId,
+                decoration: const InputDecoration(labelText: 'Assign To'),
+                items: users.map((user) {
+                  return DropdownMenuItem(
+                    value: user.id,
+                    child: Text(user.name),
+                  );
+                }).toList(),
+                onChanged: (val) => setState(() => _selectedUserId = val),
+                validator: (val) => val == null ? 'Please select a user' : null,
               ),
               const SizedBox(height: 16),
               ListTile(

@@ -60,6 +60,12 @@ class _TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final users = context.watch<TaskProvider>().users;
+    final assignedUser = users.firstWhere(
+      (u) => u.id == task.assignedToId,
+      orElse: () => UserModel(id: '', name: 'Unknown', email: ''),
+    );
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
@@ -70,8 +76,41 @@ class _TaskCard extends StatelessWidget {
             decoration: task.status == TaskStatus.done ? TextDecoration.lineThrough : null,
           ),
         ),
-        subtitle: Text('Due: ${DateFormat.yMMMd().format(task.dueDate)}'),
-        trailing: _StatusBadge(status: task.status),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Due: ${DateFormat.yMMMd().format(task.dueDate)}'),
+            Text('Assigned to: ${assignedUser.name}', style: const TextStyle(fontWeight: FontWeight.w500)),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _StatusBadge(task: task),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.grey, size: 20),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Delete Task?'),
+                    content: Text('Are you sure you want to delete "${task.title}"?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                      TextButton(
+                        onPressed: () {
+                          context.read<TaskProvider>().deleteTask(task.id);
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
         leading: Checkbox(
           value: task.status == TaskStatus.done,
           onChanged: (val) {
@@ -87,13 +126,13 @@ class _TaskCard extends StatelessWidget {
 }
 
 class _StatusBadge extends StatelessWidget {
-  final TaskStatus status;
-  const _StatusBadge({required this.status});
+  final TaskModel task;
+  const _StatusBadge({required this.task});
 
   @override
   Widget build(BuildContext context) {
     Color color;
-    switch (status) {
+    switch (task.status) {
       case TaskStatus.todo:
         color = Colors.grey;
         break;
@@ -105,16 +144,27 @@ class _StatusBadge extends StatelessWidget {
         break;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color),
-      ),
-      child: Text(
-        status.name.toUpperCase(),
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+    return PopupMenuButton<TaskStatus>(
+      onSelected: (status) {
+        context.read<TaskProvider>().updateTaskStatus(task.id, status);
+      },
+      itemBuilder: (context) => TaskStatus.values.map((status) {
+        return PopupMenuItem(
+          value: status,
+          child: Text(status.name.toUpperCase()),
+        );
+      }).toList(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color),
+        ),
+        child: Text(
+          task.status.name.toUpperCase(),
+          style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
