@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/task_provider.dart';
 import 'task_list_screen.dart';
+import 'profile.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -74,8 +75,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: const Text('TaskFlow'),
         actions: [
           IconButton(
-            onPressed: () => context.read<AuthProvider>().logout(),
-            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => ProfileScreen()),
+              );
+            },
+            icon: user?.photoUrl != null
+                ? CircleAvatar(
+                    radius: 14,
+                    backgroundImage: NetworkImage(user!.photoUrl!),
+                  )
+                : const Icon(Icons.account_circle_outlined),
           ),
         ],
       ),
